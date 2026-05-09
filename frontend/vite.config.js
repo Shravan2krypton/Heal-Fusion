@@ -12,5 +12,16 @@ export default defineConfig({
         secure: false,
       }
     }
-  }
-})
+  },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-mui': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
+        },
+      },
+    },
+  },
+})

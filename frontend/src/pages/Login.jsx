@@ -56,7 +56,11 @@ export default function Login() {
       await login(formData)
       navigate('/')
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials and try again.')
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Login failed. Please check your credentials and try again.'
+      setError(message)
       console.error('Login error:', err)
     } finally {
       setLoading(false)

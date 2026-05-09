@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
+import { AuthContext } from '../contexts/AuthContext'
 
 export default function Symptoms() {
   const [symptoms, setSymptoms] = useState('')
@@ -7,17 +8,14 @@ export default function Symptoms() {
   const [loading, setLoading] = useState(false)
   const [diagnosis, setDiagnosis] = useState(null)
   const [error, setError] = useState('')
-  const [charCount, setCharCount] = useState(0)
+  const charCount = symptoms.length
+  const { token } = useContext(AuthContext)
 
   const languages = [
     { code: 'en', name: 'English', flag: '🇺🇸' },
     { code: 'hi', name: 'हिंदी', flag: '🇮🇳' },
     { code: 'gu', name: 'ગુજરાતી', flag: '🇮🇳' }
   ]
-
-  useEffect(() => {
-    setCharCount(symptoms.length)
-  }, [symptoms])
 
   const handleVoiceInput = () => {
     if (!('webkitSpeechRecognition' in window)) {
@@ -65,7 +63,6 @@ export default function Symptoms() {
     setDiagnosis(null)
 
     try {
-      const token = localStorage.getItem('hf_token');
       const response = await fetch('/api/symptoms/analyze', {
         method: 'POST',
         headers: {
@@ -80,7 +77,11 @@ export default function Symptoms() {
       }
 
       const data = await response.json()
-      setDiagnosis(data)
+      if (data.predictions && data.predictions.length > 0) {
+        setDiagnosis(data.predictions[0])
+      } else {
+        setError('No specific diagnosis found for these symptoms. Please consult a doctor.')
+      }
     } catch (err) {
       setError(`❌ ${err.message || 'Failed to analyze symptoms. Please try again.'}`)
       console.error('Diagnosis error:', err)

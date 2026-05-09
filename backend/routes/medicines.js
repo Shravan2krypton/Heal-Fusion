@@ -39,20 +39,32 @@ router.get('/:id', async (req, res) => {
 });
 
 // Add medicine (admin only)
-router.post('/', verifyToken, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Access denied' });
+router.post(
+  '/',
+  verifyToken,
+  [
+    body('name').trim().notEmpty().withMessage('Name is required'),
+    body('description').trim().optional(),
+    body('category').trim().notEmpty().withMessage('Category is required'),
+    body('type').trim().notEmpty().withMessage('Type is required'),
+    body('price').isNumeric().withMessage('Price must be a number').toFloat(),
+    body('stock').optional().isInt({ min: 0 }).withMessage('Stock must be an integer').toInt(),
+  ],
+  async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Access denied' });
 
-  // const errors = validationResult(req);
-  // if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-  try {
-    const medicine = new Medicine(req.body);
-    await medicine.save();
-    res.status(201).json(medicine);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+    try {
+      const medicine = new Medicine(req.body);
+      await medicine.save();
+      res.status(201).json(medicine);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
   }
-});
+);
 
 // Update medicine (admin only)
 router.put('/:id', verifyToken, async (req, res) => {

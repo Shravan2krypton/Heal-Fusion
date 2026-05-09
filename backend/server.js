@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
+const { MongoMemoryServer } = require('mongodb-memory-server');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const symptomsRoutes = require('./routes/symptoms');
@@ -17,7 +18,12 @@ const doctorRoutes = require('./routes/doctor');
 const contactRoutes = require('./routes/contact');
 
 const app = express();
-app.use(cors());
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
@@ -35,22 +41,55 @@ app.use('/api/prescriptions', prescriptionsRoutes);
 app.use('/api/medical-reports', medicalReportsRoutes);
 
 app.get('/', (req, res) => res.json({ message: 'HealFusion backend running' }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/healfusion';
+const MONGO_URI = process.env.MONGO_URI;
+const JWT_SECRET = process.env.JWT_SECRET;
 
-// Start server first
-const server = app.listen(PORT, '127.0.0.1', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📱 Frontend should connect to: http://localhost:${PORT}`);
+if (!JWT_SECRET) {
+  console.error('❌ Missing JWT_SECRET in environment. Set JWT_SECRET in .env or environment variables.');
+  process.exit(1);
+}
 
-  // Then try to connect to MongoDB
-  mongoose.connect(MONGO_URI)
-    .then(() => {
-      console.log('✅ MongoDB connected successfully');
-    })
-    .catch((error) => {
-      console.error('❌ MongoDB connection error:', error.message);
-      console.log('⚠️  Server running without database');
+async function initDb() {
+  const options = { useNewUrlParser: true, useUnifiedTopology: true, serverSelectionTimeoutMS: 10000 };
+
+  if (MONGO_URI) {
+    try {
+      await mongoose.connect(MONGO_URI, options);
+      console.log('✅ MongoDB connected successfully via MONGO_URI');
+      return;
+    } catch (err) {
+      console.error('❌ MONGO_URI connect failed:', err.message);
+    }
+  } else {
+    console.warn('⚠️  No MONGO_URI provided; falling back to in-memory MongoDB');
+  }
+
+  const mongoServer = await MongoMemoryServer.create();
+  await mongoose.connect(mongoServer.getUri(), options);
+  console.log('✅ In-memory MongoDB connected successfully');
+}
+
+initDb()
+  .then(() => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📱 Frontend should connect to: http://localhost:${PORT}`);
     });
+  })
+  .catch((error) => {
+    console.error('❌ Database initialization failed:', error.message);
+    process.exit(1);
+  });
+
+// 404 & error support
+app.use((req, res) => {
+  res.status(404).json({ message: 'Not Found' });
+});
+
+app.use((err, req, res, next) => {
+  console.error('🚨 Unhandled error:', err);
+  res.status(500).json({ message: 'Internal server error' });
 });
