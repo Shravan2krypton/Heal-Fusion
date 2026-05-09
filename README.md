@@ -217,7 +217,10 @@ Create `backend/.env` based on `backend/.env.example`:
 # Server
 PORT=5000
 
-# Database (omit for in-memory dev mode)
+# Database - Neon PostgreSQL (Primary)
+DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+
+# Database - MongoDB (Fallback/Legacy)
 MONGO_URI=mongodb://localhost:27017/healfusion
 
 # JWT — use a long, random string in production
@@ -227,7 +230,7 @@ JWT_SECRET=your_super_secret_key_here
 FRONTEND_URL=http://localhost:5173
 ```
 
-> **Note:** If `MONGO_URI` is omitted, the server automatically uses an in-memory MongoDB instance (data resets on each restart). Ideal for development and demos.
+> **Note:** The server prioritizes `DATABASE_URL` (Neon PostgreSQL). If omitted, it falls back to `MONGO_URI`. If both are missing, it uses an in-memory MongoDB instance (data resets on each restart). Ideal for development and demos.
 
 ---
 
