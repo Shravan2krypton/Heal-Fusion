@@ -77,9 +77,7 @@ HealFusion is a full-stack MERN web platform that combines AI-powered symptom an
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | Node.js + Express | 4.18 | REST API server |
-| Mongoose | 7.x | MongoDB ODM |
-| MongoDB | — | Primary database |
-| mongodb-memory-server | 9.x | In-memory DB for dev |
+| Neon PostgreSQL | — | Primary database (via DATABASE_URL) |
 | bcrypt | 5.x | Password hashing |
 | jsonwebtoken | 9.x | JWT auth tokens |
 | express-rate-limit | 8.x | Auth brute-force protection |

@@ -47,11 +47,34 @@ const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// ---------------------------------------------------------------------------
+// Database connection – Neon PostgreSQL (fallback to MongoDB if needed)
+// ---------------------------------------------------------------------------
+
 if (!JWT_SECRET) {
   console.error('❌ Missing JWT_SECRET in environment. Set JWT_SECRET in .env or environment variables.');
   process.exit(1);
 }
 
+// PostgreSQL (Neon) connection using the pg library. If DATABASE_URL is set, we connect to Neon.
+const { Pool } = require('pg');
+let pgPool = null;
+if (process.env.DATABASE_URL) {
+  try {
+    pgPool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+    pgPool.connect(err => {
+      if (err) {
+        console.error('❌ Failed to connect to Neon PostgreSQL:', err.message);
+      } else {
+        console.log('✅ Connected to Neon PostgreSQL successfully');
+      }
+    });
+  } catch (e) {
+    console.error('❌ Neon DB connection error:', e.message);
+  }
+}
+
+// If PostgreSQL is not configured, fall back to MongoDB (as originally).
 async function initDb() {
   const options = { useNewUrlParser: true, useUnifiedTopology: true, serverSelectionTimeoutMS: 10000 };
 
