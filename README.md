@@ -220,8 +220,6 @@ PORT=5000
 # Database - Neon PostgreSQL (Primary)
 DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
 
-# Database - MongoDB (Fallback/Legacy)
-MONGO_URI=mongodb://localhost:27017/healfusion
 
 # JWT — use a long, random string in production
 JWT_SECRET=your_super_secret_key_here
